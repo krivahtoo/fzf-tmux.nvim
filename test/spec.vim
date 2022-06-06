@@ -8,5 +8,5 @@ lua require('plenary.busted')
 lua require('matcher_combinators.luassert')
 
 " configuring the plugin
-runtime plugin/fzf_tmux.lua
-lua require('fzf_tmux').setup({ name = 'Jane Doe' })
+runtime plugin/fzf-tmux.lua
+lua require('fzf-tmux').setup{}
