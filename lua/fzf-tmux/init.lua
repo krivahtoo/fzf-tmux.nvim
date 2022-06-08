@@ -52,6 +52,13 @@ function M._run(options, callback)
     table.insert(args, get_preview_cmd())
   end
 
+  if opts.fzf.raw then
+    local raw_args = util.build_args(opts.fzf.raw)
+    for _,v in ipairs(raw_args) do
+      table.insert(args, v)
+    end
+  end
+
   Job
     :new({
       command = opts.cmd,
@@ -73,11 +80,37 @@ end
 function M.setup(options)
   M.options = with_defaults(options)
 
-  vim.api.nvim_create_user_command('Fzf', function(opts)
+  vim.api.nvim_create_user_command('Files', function(opts)
     M.files {
-      args = opts['fargs'],
+      fargs = opts.fargs,
+      command = 'fd',
+      args = {
+        '--type', 'file',
+        '-H', '-I',
+        '-E', '.git',
+        '--strip-cwd-prefix',
+        '--color', 'always'
+      },
     }
   end, {
+    nargs = '*',
+    bang = true,
+    desc = 'Search all files in the current directory',
+  })
+  vim.api.nvim_create_user_command('Rg', function(opts)
+    M.grep {
+      fargs = opts.fargs,
+      command = 'rg',
+      args = {
+        '--column',
+        '--line-number',
+        '--no-heading',
+        '--color=always',
+        '--smart-case'
+      },
+    }
+  end, {
+    nargs = '+',
     desc = 'Search all files in the current directory',
   })
 end
@@ -91,10 +124,16 @@ function M.files(opts)
     vim.api.nvim_err_writeln 'fzf-tmux.nvim: you should first call setup() to load the plugin'
     return
   end
+  local args = opts.args
+  if opts.fargs then
+    for _,v in ipairs(opts.fargs) do
+      table.insert(args, v)
+    end
+  end
   M._run({
     source = {
-      command = 'fd',
-      args = { '--type', 'file', '-H', '-I', '-E', '.git', '--strip-cwd-prefix', '--color', 'always' },
+      command = opts.command,
+      args = args,
     },
   }, function(result)
     for _, line in ipairs(result) do
@@ -103,6 +142,52 @@ function M.files(opts)
         vim.cmd(cmd)
       end, 0)
     end
+  end)
+end
+
+function M.grep(opts)
+  if not M.is_configured() then
+    vim.api.nvim_err_writeln 'fzf-tmux.nvim: you should first call setup() to load the plugin'
+    return
+  end
+  local args = opts.args
+  if opts.fargs then
+    for _,v in ipairs(opts.fargs) do
+      table.insert(args, v)
+    end
+  end
+  -- Add current path to ignore stdin
+  table.insert(args, './')
+  M._run({
+    fzf = {
+      prompt = 'Rg',
+      raw = {
+        ['-d'] = ':',
+        ['--preview-window'] = '+{2}/2'
+      }
+    },
+    source = {
+      command = opts.command,
+      args = args,
+      on_stderr = function (err)
+        vim.api.nvim_err_writeln(err)
+      end,
+    },
+  }, function(result)
+    if #result > 1 then
+      vim.defer_fn(function()
+        vim.fn.setqflist({}, 'r', { lines = result })
+        vim.cmd[[copen]]
+        vim.cmd[[wincmd p]]
+      end, 0)
+      return
+    end
+    local line = unpack(result)
+    local f = vim.split(line, ':', {plain = true, trimempty = true})
+    local cmd = string.format(':edit +%s %s', f[2], f[1])
+    vim.defer_fn(function()
+      vim.cmd(cmd)
+    end, 0)
   end)
 end
 
