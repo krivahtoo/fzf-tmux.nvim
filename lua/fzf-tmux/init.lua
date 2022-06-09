@@ -54,7 +54,7 @@ function M._run(options, callback)
 
   if opts.fzf.raw then
     local raw_args = util.build_args(opts.fzf.raw)
-    for _,v in ipairs(raw_args) do
+    for _, v in ipairs(raw_args) do
       table.insert(args, v)
     end
   end
@@ -85,11 +85,15 @@ function M.setup(options)
       fargs = opts.fargs,
       command = 'fd',
       args = {
-        '--type', 'file',
-        '-H', '-I',
-        '-E', '.git',
+        '--type',
+        'file',
+        '-H',
+        '-I',
+        '-E',
+        '.git',
         '--strip-cwd-prefix',
-        '--color', 'always'
+        '--color',
+        'always',
       },
     }
   end, {
@@ -106,7 +110,7 @@ function M.setup(options)
         '--line-number',
         '--no-heading',
         '--color=always',
-        '--smart-case'
+        '--smart-case',
       },
     }
   end, {
@@ -126,7 +130,7 @@ function M.files(opts)
   end
   local args = opts.args
   if opts.fargs then
-    for _,v in ipairs(opts.fargs) do
+    for _, v in ipairs(opts.fargs) do
       table.insert(args, v)
     end
   end
@@ -152,7 +156,7 @@ function M.grep(opts)
   end
   local args = opts.args
   if opts.fargs then
-    for _,v in ipairs(opts.fargs) do
+    for _, v in ipairs(opts.fargs) do
       table.insert(args, v)
     end
   end
@@ -163,13 +167,13 @@ function M.grep(opts)
       prompt = 'Rg',
       raw = {
         ['-d'] = ':',
-        ['--preview-window'] = '+{2}/2'
-      }
+        ['--preview-window'] = '+{2}/2',
+      },
     },
     source = {
       command = opts.command,
       args = args,
-      on_stderr = function (err)
+      on_stderr = function(err)
         vim.api.nvim_err_writeln(err)
       end,
     },
@@ -177,13 +181,13 @@ function M.grep(opts)
     if #result > 1 then
       vim.defer_fn(function()
         vim.fn.setqflist({}, 'r', { lines = result })
-        vim.cmd[[copen]]
-        vim.cmd[[wincmd p]]
+        vim.cmd [[copen]]
+        vim.cmd [[wincmd p]]
       end, 0)
       return
     end
     local line = unpack(result)
-    local f = vim.split(line, ':', {plain = true, trimempty = true})
+    local f = vim.split(line, ':', { plain = true, trimempty = true })
     local cmd = string.format(':edit +%s %s', f[2], f[1])
     vim.defer_fn(function()
       vim.cmd(cmd)
