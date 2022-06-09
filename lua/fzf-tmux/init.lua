@@ -1,5 +1,4 @@
 local Job = require 'plenary.job'
-local tbl = require 'plenary.tbl'
 local util = require 'fzf-tmux.util'
 local config = require 'fzf-tmux.config'
 
