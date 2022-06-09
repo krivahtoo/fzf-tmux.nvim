@@ -8,6 +8,11 @@
 
 A simple Neovim plugin to open fzf on tmux floating window.
 
+
+https://user-images.githubusercontent.com/41364823/172863707-f9559d1d-ee94-4e3a-ba55-90aec1f25d9b.mp4
+
+
+
 ## Requirements
 
 - neovim >= `0.7.0`
