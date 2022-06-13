@@ -175,6 +175,13 @@ function M.grep(opts)
       on_stderr = function(err)
         vim.api.nvim_err_writeln(err)
       end,
+      on_exit = function (_, code)
+        if code == 1 then
+          vim.notify('No matches found', 'warn', { title = 'fzf-tmux' })
+        elseif code == 2 then
+          vim.notify('Grep program exited with error code 2', 'error', { title = 'fzf-tmux' })
+        end
+      end,
     },
   }, function(result)
     if #result > 1 then
