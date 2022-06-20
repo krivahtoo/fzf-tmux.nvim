@@ -71,7 +71,7 @@ function M._run(options, callback)
         end
         callback(job:result())
       end,
-      writer = Job:new(opts.source),
+      writer = vim.tbl_islist(opts.source) and opts.source or Job:new(opts.source),
     })
     :start()
 end
@@ -99,6 +99,26 @@ function M.setup(options)
     nargs = '*',
     bang = true,
     desc = 'Search all files in the current directory',
+  })
+  vim.api.nvim_create_user_command('GFiles', function(opts)
+    M.files {
+      fargs = opts.fargs,
+      command = 'git',
+      args = { 'ls-files' },
+    }
+  end, {
+    nargs = '*',
+    bang = true,
+    desc = 'Search git files',
+  })
+  vim.api.nvim_create_user_command('History', function(opts)
+    M.files {
+      fargs = opts.fargs,
+      source = vim.v.oldfiles,
+    }
+  end, {
+    nargs = '*',
+    desc = 'Search history files',
   })
   vim.api.nvim_create_user_command('Rg', function(opts)
     M.grep {
@@ -133,11 +153,12 @@ function M.files(opts)
       table.insert(args, v)
     end
   end
+  local source = opts.source or {
+    command = opts.command,
+    args = args,
+  }
   M._run({
-    source = {
-      command = opts.command,
-      args = args,
-    },
+    source = source,
   }, function(result)
     for _, line in ipairs(result) do
       local cmd = string.format(':edit %s', line)
@@ -173,9 +194,9 @@ function M.grep(opts)
       command = opts.command,
       args = args,
       on_stderr = function(err)
-        vim.api.nvim_err_writeln(err)
+        vim.notify(err, 'error', { title = 'fzf-tmux' })
       end,
-      on_exit = function (_, code)
+      on_exit = function(_, code)
         if code == 1 then
           vim.notify('No matches found', 'warn', { title = 'fzf-tmux' })
         elseif code == 2 then
