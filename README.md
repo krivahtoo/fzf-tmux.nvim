@@ -14,13 +14,13 @@ https://user-images.githubusercontent.com/41364823/172863707-f9559d1d-ee94-4e3a-
 
 
 
-## Requirements
+## ⚡️ Requirements
 
 - neovim >= `0.7.0`
 - tmux >= `3.2`
 - fzf
 
-## Using
+## 🚀 Installation/Setup
 
 For example using [`packer`][packer]:
 ```lua
