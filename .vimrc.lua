@@ -7,8 +7,6 @@ local luadev = require("lua-dev").setup({
   library = {
     vimruntime = true, -- runtime path
     types = true, -- full signature, docs and completion of vim.api, vim.treesitter, vim.lsp and others
-    -- plugins = true, -- installed opt or start plugins in packpath
-    -- you can also specify the list of plugins to make available as a workspace library
     plugins = { "plenary.nvim" },
   },
   runtime_path = false, -- enable this to get completion in require strings. Slow!

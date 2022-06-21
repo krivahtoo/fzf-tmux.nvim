@@ -40,7 +40,9 @@ local function filter_buffers(opts)
   for _, bufnr in ipairs(buflist) do
     local info = vim.fn.getbufinfo(bufnr)[1]
     if info.listed == 1 or opts.all then
-      local flag = (bufnr == currbuf and '%') or (bufnr == prevbuf and '#') or ' '
+      local flag = (bufnr == currbuf and '%')
+        or (bufnr == prevbuf and '#')
+        or ' '
 
       local buffer = {
         bufnr = bufnr,
@@ -64,7 +66,11 @@ end
 ---@param callback fun(result: string[])
 function M._run(options, callback)
   if not M.is_configured() then
-    vim.notify('you should first call setup() to load the plugin', 'error', { title = 'fzf-tmux' })
+    vim.notify(
+      'you should first call setup() to load the plugin',
+      'error',
+      { title = 'fzf-tmux' }
+    )
     return
   end
   if callback == nil then
@@ -110,13 +116,19 @@ function M._run(options, callback)
       on_exit = function(job, code)
         if code ~= 0 then
           if code == 2 then
-            vim.notify(string.format('fzf-tmux exited with an error code %s', code), 'error', { title = 'fzf-tmux' })
+            vim.notify(
+              string.format('fzf-tmux exited with an error code %s', code),
+              'error',
+              { title = 'fzf-tmux' }
+            )
           end
           return
         end
         callback(job:result())
       end,
-      writer = vim.tbl_islist(opts.source) and opts.source or Job:new(opts.source),
+      writer = vim.tbl_islist(opts.source) and opts.source or Job:new(
+        opts.source
+      ),
     })
     :start()
 end
@@ -180,14 +192,14 @@ function M.setup(options)
     }
   end, {
     nargs = '+',
-    desc = 'Search all files in the current directory',
+    desc = 'Run ripgrep on the current directory',
   })
   vim.api.nvim_create_user_command('Buffers', function(opts)
     M.buffers { all = opts.bang }
   end, {
     nargs = '?',
     bang = true,
-    desc = 'Search all files in the current directory',
+    desc = 'Search current buffers',
   })
 end
 
@@ -197,20 +209,17 @@ function M.is_configured()
 end
 
 function M.files(opts)
-  if not M.is_configured() then
-    vim.api.nvim_err_writeln 'fzf-tmux.nvim: you should first call setup() to load the plugin'
-    return
-  end
   local args = opts.args
   if opts.fargs then
     for _, v in ipairs(opts.fargs) do
       table.insert(args, v)
     end
   end
-  local source = opts.source or {
-    command = opts.command,
-    args = args,
-  }
+  local source = opts.source
+    or {
+      command = opts.command,
+      args = args,
+    }
   M._run({
     source = source,
   }, function(result)
@@ -224,10 +233,6 @@ function M.files(opts)
 end
 
 function M.grep(opts)
-  if not M.is_configured() then
-    vim.api.nvim_err_writeln 'fzf-tmux.nvim: you should first call setup() to load the plugin'
-    return
-  end
   local args = opts.args
   if opts.fargs then
     for _, v in ipairs(opts.fargs) do
@@ -255,7 +260,11 @@ function M.grep(opts)
         if code == 1 then
           vim.notify('No matches found', 'warn', { title = 'fzf-tmux' })
         elseif code == 2 then
-          vim.notify('Grep program exited with error code 2', 'error', { title = 'fzf-tmux' })
+          vim.notify(
+            'Grep program exited with error code 2',
+            'error',
+            { title = 'fzf-tmux' }
+          )
         end
       end,
     },
@@ -279,10 +288,6 @@ end
 
 ---@param opts BufferFilterOptions
 function M.buffers(opts)
-  if not M.is_configured() then
-    vim.api.nvim_err_writeln 'fzf-tmux.nvim: you should first call setup() to load the plugin'
-    return
-  end
   ---@type BufferFilterOptions
   local options = vim.tbl_extend('keep', opts, { sort_lastused = true })
 
@@ -292,14 +297,29 @@ function M.buffers(opts)
     local curr_bufnr = vim.api.nvim_get_current_buf()
     local linenr = buf.info.lnum or 0
     local name = buf.bufnr == curr_bufnr
-        and colors.blue(vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf.bufnr), ':p:~:.'))
+        and colors.blue(
+          vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf.bufnr), ':p:~:.')
+        )
       or vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf.bufnr), ':p:~:.')
     local flag = buf.flag == '#' and colors.magenta(buf.flag) or buf.flag
-    local target = buf.bufnr ~= curr_bufnr and name .. ':' .. linenr .. ':' or ''
-    local modified = vim.fn.getbufvar(buf.bufnr, '&modified') == 1 and colors.green ' ' or ''
-    local readonly = vim.fn.getbufvar(buf.bufnr, '&readonly') == 1 and colors.red ' ' or ''
-    local str = string.format('[%s] %s\t%s\t%s\t%s', colors.yellow(buf.bufnr), flag, name, modified, readonly)
-    str = buf.bufnr ~= curr_bufnr and target .. '\t' .. linenr .. '\t' .. str or str
+    local target = buf.bufnr ~= curr_bufnr and name .. ':' .. linenr .. ':'
+      or ''
+    local modified = vim.fn.getbufvar(buf.bufnr, '&modified') == 1
+        and colors.green ' '
+      or ''
+    local readonly = vim.fn.getbufvar(buf.bufnr, '&readonly') == 1
+        and colors.red ' '
+      or ''
+    local str = string.format(
+      '[%s] %s\t%s\t%s\t%s',
+      colors.yellow(buf.bufnr),
+      flag,
+      name,
+      modified,
+      readonly
+    )
+    str = buf.bufnr ~= curr_bufnr and target .. '\t' .. linenr .. '\t' .. str
+      or str
     if buf.bufnr == curr_bufnr then
       header = str
     else
