@@ -354,5 +354,51 @@ function M.buffers(opts)
   end)
 end
 
+function M.commits()
+  M._run({
+    source = {
+      command = 'git',
+      args = {
+        'log',
+        '--oneline',
+        '--graph',
+        '--color=always',
+        '--date=short',
+        '--pretty=format:%C(green)%C(bold)%cd %C(auto)%h%d %s %C(black)%C(bold)%cr %C(black)(%an)',
+      },
+      on_exit = function(_, code)
+        if code ~= 0 then
+          vim.notify(
+            'git exited with error code',
+            'error',
+            { title = 'fzf-tmux' }
+          )
+        end
+      end,
+    },
+    fzf = {
+      prompt = 'Commits',
+      preview = false,
+      raw = {
+        '-0',
+        '--reverse',
+        '--no-sort',
+        ['--bind'] = 'ctrl-s:toggle-sort',
+        ['--header'] = 'Press ' .. colors.magenta 'CTRL-S' .. ' to toggle sort',
+        ['--preview'] = 'grep -o "[a-f0-9]\\{7,\\}" <<< {} | xargs git show | delta',
+        ['--preview-window'] = '60%',
+      },
+    },
+  }, function(result)
+    for _, line in ipairs(result) do
+      local id = string.match(line, ' (%w+) ')
+      local cmd = string.format(':DiffviewOpen %s', id)
+      vim.defer_fn(function()
+        vim.cmd(cmd)
+      end, 0)
+    end
+  end)
+end
+
 M.options = nil
 return M
