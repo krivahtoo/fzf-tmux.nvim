@@ -279,9 +279,12 @@ function M.grep(opts)
     end
     local line = unpack(result)
     local f = vim.split(line, ':', { plain = true, trimempty = true })
-    local cmd = string.format(':edit +%s %s', f[2], f[1])
+    local colmn = tonumber(f[3])
     vim.defer_fn(function()
-      vim.cmd(cmd)
+      vim.cmd(string.format(':edit +%s %s', f[2], f[1]))
+      if colmn ~= nil then
+        vim.cmd(string.format(':normal %s|', colmn))
+      end
     end, 0)
   end)
 end
