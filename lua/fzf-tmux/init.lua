@@ -245,7 +245,7 @@ function M.grep(opts)
     fzf = {
       prompt = 'Rg',
       raw = {
-        ['-0'] = true,
+        '-0',
         ['-d'] = ':',
         ['--preview-window'] = '60%,+{2}/2',
       },
