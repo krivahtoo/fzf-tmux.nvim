@@ -201,6 +201,16 @@ function M.setup(options)
     bang = true,
     desc = 'Search current buffers',
   })
+  vim.api.nvim_create_user_command('Commits', function()
+    M.commits()
+  end, {
+    desc = 'View commit diff with diffview.nvim',
+  })
+  vim.api.nvim_create_user_command('Lines', function(opts)
+    M.lines(opts.bang)
+  end, {
+    desc = 'Search line in the current buffer',
+  })
 end
 
 ---@return boolean
@@ -305,6 +315,7 @@ function M.buffers(opts)
         )
       or vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf.bufnr), ':p:~:.')
     local flag = buf.flag == '#' and colors.magenta(buf.flag) or buf.flag
+    name = #name ~= 0 and name or '[No Name]'
     local target = buf.bufnr ~= curr_bufnr and name .. ':' .. linenr .. ':'
       or ''
     local modified = vim.fn.getbufvar(buf.bufnr, '&modified') == 1
@@ -395,6 +406,76 @@ function M.commits()
       local cmd = string.format(':DiffviewOpen %s', id)
       vim.defer_fn(function()
         vim.cmd(cmd)
+      end, 0)
+    end
+  end)
+end
+
+function M.all_files()
+  M.files {
+    command = 'fd',
+    args = {
+      '--type',
+      'file',
+      '-H',
+      '-I',
+      '-E',
+      '.git',
+      '--strip-cwd-prefix',
+      '--color',
+      'always',
+    },
+  }
+end
+
+---@param current boolean Use the current buffer only.
+function M.lines(current)
+  local lines = {}
+  current = current or false
+  if current then
+    local buf_lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
+    for i, line in ipairs(buf_lines) do
+      if #line ~= 0 then
+        local name = colors.blue(vim.fn.bufname(vim.fn.bufnr()))
+        table.insert(
+          lines,
+          string.format('%s:%s: %s', name, colors.yellow(i), line)
+        )
+      end
+    end
+  else
+    local buffers = filter_buffers { sort_lastused = true }
+    for _, buffer in ipairs(buffers) do
+      if buffer.info.name ~= '' then
+        local buf_lines = vim.fn.readfile(buffer.info.name)
+        for i, line in ipairs(buf_lines) do
+          if #line ~= 0 then
+            local name = colors.blue(vim.fn.bufname(buffer.bufnr))
+            table.insert(
+              lines,
+              string.format('%s:%s: %s', name, colors.yellow(i), line)
+            )
+          end
+        end
+      end
+    end
+  end
+  M._run({
+    source = lines,
+    fzf = {
+      prompt = current and 'BLines' or 'Lines',
+      preview = false,
+      raw = {
+        '-0',
+        '--tac',
+        '--no-sort',
+      },
+    },
+  }, function(result)
+    for _, line in ipairs(result) do
+      local f = vim.split(line, ':', { plain = true, trimempty = true })
+      vim.defer_fn(function()
+        vim.cmd(string.format(':edit +%s %s', f[2], f[1]))
       end, 0)
     end
   end)
