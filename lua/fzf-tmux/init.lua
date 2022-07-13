@@ -73,6 +73,12 @@ function M._run(options, callback)
     )
     return
   end
+  -- tmux sets the TMUX env var
+  if vim.env['TMUX'] == nil then
+    -- TODO: fallback to nvim_open_win
+    vim.notify('Oops, looks like you are not using tmux', 'warn', { title = 'fzf-tmux' })
+    return
+  end
   if callback == nil then
     vim.notify('callback is required', 'error', { title = 'fzf-tmux' })
     return
@@ -418,7 +424,6 @@ function M.all_files()
       '--type',
       'file',
       '-H',
-      '-I',
       '-E',
       '.git',
       '--strip-cwd-prefix',
