@@ -185,17 +185,7 @@ function M.setup(options)
     desc = 'Search history files',
   })
   vim.api.nvim_create_user_command('Rg', function(opts)
-    M.grep {
-      fargs = opts.fargs,
-      command = 'rg',
-      args = {
-        '--column',
-        '--line-number',
-        '--no-heading',
-        '--color=always',
-        '--smart-case',
-      },
-    }
+    M.rg(opts)
   end, {
     nargs = '+',
     desc = 'Run ripgrep on the current directory',
@@ -213,8 +203,9 @@ function M.setup(options)
     desc = 'View commit diff with diffview.nvim',
   })
   vim.api.nvim_create_user_command('Lines', function(opts)
-    M.lines(opts.bang)
+    M.lines(not opts.bang)
   end, {
+    bang = true,
     desc = 'Search line in the current buffer',
   })
 end
@@ -429,6 +420,21 @@ function M.all_files()
       '--strip-cwd-prefix',
       '--color',
       'always',
+    },
+  }
+end
+
+function M.rg(opts)
+  M.grep {
+    fargs = opts.fargs,
+    command = 'rg',
+    args = {
+      '--column',
+      '--line-number',
+      '--no-heading',
+      '--color=always',
+      '--smart-case',
+      '--trim',
     },
   }
 end
